@@ -32,6 +32,7 @@ services:
       - traefik.http.routers.ncat.tls.certresolver=mytlschallenge
     volumes:
       - storage:/var/www/html/storage/app
+      - /opt/toolkit/gcp-credentials.json:/app/gcp-credentials.json:ro
       - logs:/var/www/html/storage/logs
     restart: unless-stopped
 

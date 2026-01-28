@@ -84,7 +84,12 @@ def trim_video(video_url, start=None, end=None, job_id=None, video_codec='libx26
     try:
         # Get the file extension
         _, ext = os.path.splitext(input_filename)
-        
+
+        # Force .mp4 extension when using H.264 codec (libx264)
+        # H.264 requires MP4 container, not WebM
+        if video_codec == 'libx264' and ext.lower() == '.webm':
+            ext = '.mp4'
+
         # Create output filename
         output_filename = os.path.join(LOCAL_STORAGE_PATH, f"{job_id}_output{ext}")
         
