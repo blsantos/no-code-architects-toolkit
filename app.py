@@ -17,6 +17,7 @@
 
 
 from flask import Flask, request
+from flask_cors import CORS
 from queue import Queue
 from services.webhook import send_webhook
 import threading
@@ -32,6 +33,19 @@ MAX_QUEUE_LENGTH = int(os.environ.get('MAX_QUEUE_LENGTH', 0))
 
 def create_app():
     app = Flask(__name__)
+
+    # Enable CORS for all routes - allow requests from all creavisuel.pro subdomains
+    CORS(app, resources={
+        r"/*": {
+            "origins": [
+                "https://*.creavisuel.pro",
+                "https://creavisuel.pro",
+                "http://localhost:*"
+            ],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "X-API-Key"]
+        }
+    })
 
     # Create a queue to hold tasks
     task_queue = Queue()
