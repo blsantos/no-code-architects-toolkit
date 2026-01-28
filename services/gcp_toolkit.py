@@ -21,8 +21,15 @@ import json
 import logging
 from google.oauth2 import service_account
 from google.cloud import storage
-from google.cloud.run_v2 import JobsClient, RunJobRequest
-from google.api_core.exceptions import GoogleAPIError
+# Optional import for Cloud Run jobs (not needed for GCS upload)
+try:
+    from google.cloud.run_v2 import JobsClient, RunJobRequest
+    from google.api_core.exceptions import GoogleAPIError
+    CLOUD_RUN_AVAILABLE = True
+except ImportError:
+    CLOUD_RUN_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("google.cloud.run_v2 not available, Cloud Run job triggering will be disabled")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,11 +51,21 @@ def initialize_gcp_client():
     GCS_SCOPES = ['https://www.googleapis.com/auth/devstorage.full_control']
 
     try:
-        credentials_info = json.loads(GCP_SA_CREDENTIALS)
+        # Check if GCP_SA_CREDENTIALS is a file path or JSON string
+        if os.path.isfile(GCP_SA_CREDENTIALS):
+            # It's a file path, read the file
+            logger.info(f"Reading GCP credentials from file: {GCP_SA_CREDENTIALS}")
+            with open(GCP_SA_CREDENTIALS, 'r') as f:
+                credentials_info = json.load(f)
+        else:
+            # It's a JSON string, parse it
+            credentials_info = json.loads(GCP_SA_CREDENTIALS)
+
         gcs_credentials = service_account.Credentials.from_service_account_info(
             credentials_info,
             scopes=GCS_SCOPES
         )
+        logger.info("GCS client initialized successfully")
         return storage.Client(credentials=gcs_credentials)
     except Exception as e:
         logger.error(f"Failed to initialize GCS client: {e}")
