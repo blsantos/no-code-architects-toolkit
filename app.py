@@ -25,25 +25,33 @@ import uuid
 import os
 import time
 import json
+import re
 from version import BUILD_NUMBER  # Import the BUILD_NUMBER
 from app_utils import log_job_status, discover_and_register_blueprints  # Import the discover_and_register_blueprints function
 from services.gcp_toolkit import trigger_cloud_run_job
+from config import LOCAL_STORAGE_PATH
 
 MAX_QUEUE_LENGTH = int(os.environ.get('MAX_QUEUE_LENGTH', 0))
+
+# Ensure jobs directory exists for job status persistence
+JOBS_DIR = os.path.join(LOCAL_STORAGE_PATH, 'jobs')
+os.makedirs(JOBS_DIR, exist_ok=True)
 
 def create_app():
     app = Flask(__name__)
 
-    # Enable CORS for all routes - allow requests from all creavisuel.pro subdomains
+    # Enable CORS for all routes - allow requests from ANY creavisuel.pro subdomain
+    # This supports multi-tenant architecture without manual domain addition
     CORS(app, resources={
         r"/*": {
             "origins": [
-                "https://*.creavisuel.pro",
-                "https://creavisuel.pro",
-                "http://localhost:*"
+                re.compile(r"^https://.*\.creavisuel\.pro$"),  # Any subdomain: *.creavisuel.pro
+                "https://creavisuel.pro",                      # Root domain
+                re.compile(r"^http://localhost:\d+$")          # Localhost on any port
             ],
             "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type", "X-API-Key"]
+            "allow_headers": ["Content-Type", "X-API-Key"],
+            "expose_headers": ["Content-Type"]
         }
     })
 
