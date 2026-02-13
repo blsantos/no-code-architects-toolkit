@@ -78,6 +78,7 @@ def process_convert_video(job_id, data):
             video_duration = float(probe_data.get('format', {}).get('duration', 0))
 
             logger.info(f"Job {job_id}: Input video duration: {video_duration:.2f}s, has audio: {has_audio}")
+            logger.info(f"Job {job_id}: Forcing Meta-compatible encoding: Profile=Main, Level=3.1, FPS=25, Dimensions=1080x1920, SAR=1:1")
 
             # Calculate optimal bitrate if target size is specified
             if target_size_mb and video_duration > 0:
@@ -117,6 +118,10 @@ def process_convert_video(job_id, data):
                 '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000',  # Silent audio source
                 '-c:v', 'libx264',      # H.264 codec
                 '-preset', 'fast',       # Faster encoding
+                '-profile:v', 'main',    # Force Main profile (Facebook/Instagram compatibility)
+                '-level', '3.1',         # Force Level 3.1 (mobile compatibility)
+                '-r', '25',              # Force 25 fps (stable framerate)
+                '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1',  # Force 1080x1920 + SAR 1:1
             ] + video_encoding + [      # Add bitrate or CRF parameters
                 '-c:a', 'aac',           # AAC audio codec
                 '-b:a', '128k',          # 128kbps audio bitrate
@@ -135,6 +140,10 @@ def process_convert_video(job_id, data):
                 '-i', input_file,
                 '-c:v', 'libx264',      # H.264 codec
                 '-preset', 'fast',       # Faster encoding
+                '-profile:v', 'main',    # Force Main profile (Facebook/Instagram compatibility)
+                '-level', '3.1',         # Force Level 3.1 (mobile compatibility)
+                '-r', '25',              # Force 25 fps (stable framerate)
+                '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1',  # Force 1080x1920 + SAR 1:1
             ] + video_encoding + [      # Add bitrate or CRF parameters
                 '-c:a', 'aac',           # AAC audio
                 '-b:a', '128k',          # 128kbps audio
