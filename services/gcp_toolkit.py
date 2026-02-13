@@ -83,6 +83,7 @@ def upload_to_gcs(file_path, bucket_name=GCP_BUCKET_NAME):
         bucket = gcs_client.bucket(bucket_name)
         blob = bucket.blob(os.path.basename(file_path))
         blob.upload_from_filename(file_path)
+        blob.make_public()  # Make the file publicly accessible
         logger.info(f"File uploaded successfully to GCS: {blob.public_url}")
         return blob.public_url
     except Exception as e:
