@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 @validate_payload({
     "type": "object",
     "properties": {
-        "video_url": {"type": "string", "format": "uri"}
+        "video_url": {"type": "string", "format": "uri"},
+        "force_audio": {"type": "boolean"}  # Optional: Force silent audio track if missing
     },
     "required": ["video_url"],
     "additionalProperties": False
@@ -27,10 +28,12 @@ def convert_video_route(job_id, data):
     """
     Fast video conversion from WebM to MP4
     No trimming - just format/codec conversion
+    Optionally adds silent audio track for Facebook Stories compatibility
 
     Request body:
     {
-        "video_url": "https://..."  // Required: URL of video to convert
+        "video_url": "https://...",        // Required: URL of video to convert
+        "force_audio": true                // Optional: Add silent audio if missing (default: false)
     }
 
     Returns:
@@ -38,7 +41,8 @@ def convert_video_route(job_id, data):
         "output_url": "https://...",
         "job_id": "...",
         "format": "mp4",
-        "codec": "h264"
+        "codec": "h264",
+        "silent_audio_added": true         // Present if silent audio was added
     }
     """
     logger.info(f"Job {job_id}: Received video convert request for {data['video_url']}")
