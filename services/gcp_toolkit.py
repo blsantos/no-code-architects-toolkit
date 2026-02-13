@@ -83,9 +83,18 @@ def upload_to_gcs(file_path, bucket_name=GCP_BUCKET_NAME):
         bucket = gcs_client.bucket(bucket_name)
         blob = bucket.blob(os.path.basename(file_path))
         blob.upload_from_filename(file_path)
-        blob.make_public()  # Make the file publicly accessible
-        logger.info(f"File uploaded successfully to GCS: {blob.public_url}")
-        return blob.public_url
+
+        # Generate signed URL (valid for 7 days) instead of making public
+        # Uniform bucket-level access prevents legacy ACL methods
+        from datetime import timedelta
+        signed_url = blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(days=7),
+            method="GET"
+        )
+
+        logger.info(f"File uploaded successfully to GCS with signed URL (7 days expiration)")
+        return signed_url
     except Exception as e:
         logger.error(f"Error uploading file to GCS: {e}")
         raise
